@@ -11,7 +11,7 @@ This reference app demonstrates how to generate a branded call from a web contac
 1. Expose the server to public (you may use ngrok)
 1. Enable Voice Capability in your Vonage Application and paste the server url into: \
     Answer url (POST): {your_server}/voice/answer \
-    Event url (POST): {your_server}/voice/answer
+    Event url (POST): {your_server}/voice/event
 1. Open your browser and go to {your_server}/contact-center, you may place a call to mobile app user there.
 
 ## Setup Push Notification
