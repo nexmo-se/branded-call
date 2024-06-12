@@ -57,22 +57,11 @@
       border: 1.5px solid green;
       color: green;
     }
-    #submit-verify-phone, #submit-verify-code {
-      border: 1.5px solid blue;
-      color: white;
-      background-color: blue;
-      margin-top: 24px;
-      width: calc(100% - 32px)
-    }
     .section {
-      display: none;
       margin-top: 12px;
       margin-bottom: 48px;
       text-align: left;
       padding-left: 18px;
-    }
-    .section.is-shown {
-      display: block;
     }
     body {
       padding-left: 24px;
@@ -110,17 +99,6 @@
     #invite-call, #in-call {
       text-align: center;
     }
-    #verify-request, #verify-code {
-      border: 1px dotted gray;
-      text-align: left;
-      width: 480px;
-      padding-bottom: 24px;
-    }
-    #verify-code {
-      border: 1px dotted gray;
-      text-align: left;
-      width: 350px
-    }
     #status {
       color: red;
     }
@@ -129,19 +107,6 @@
 
 <body>
   <h1><span><img src="contact-center.jpeg" alt="Vonage" id="contact-center-icon"></span>Contact Center</h1>
-  <div id="verify-request" class="section is-shown">
-    <h2>Log In</h2>
-    <label for="verify-phone-number">Phone Number:</label>
-    <input type="text" name="verify-phone-number" value="" placeholder="i.e. 14155550100" id="verify-phone-number" size="30">
-    <p><button type="button" id="submit-verify-phone">Submit</button></p>
-  </div>
-  <div id="verify-code" class="section">
-    <h2>SMS OTP Verification</h2>
-    <label for="code">Verification Code:</label>
-    <input type="text" name="code" value="" placeholder="i.e. 1234" id="code" size="30">
-    <button type="button" id="submit-verify-code">Verify</button>
-  </div>
-
   <div class="section" id="departments">
     <label for="department">Department:</label>
     <select name="department" id="department">
@@ -185,10 +150,6 @@
     const ringingSection = document.getElementById('invite-call')
     const inCallSection = document.getElementById('in-call')
 
-    const sections = document.getElementsByClassName("section")
-    const submitVerifyPhoneButton = document.getElementById("submit-verify-phone")
-    const submitVerifyCodeButton = document.getElementById("submit-verify-code")
-
     const legUser = document.getElementById('leg-user')
     let request_id = null
     let loggedInPhoneNumber = null
@@ -199,6 +160,8 @@
     const client = new vonageClientSDK.VonageClient({
        region: "AP"
     });
+
+    updateSectionUI('idle')
 
     client.on('legStatusUpdate', (callId, legId, status) => {
       console.log("call id", callId)
@@ -312,75 +275,6 @@
         console.error("Error hanging up call: ", error);
         });                
     });
-
-     // Verififcation
-     submitVerifyPhoneButton.addEventListener('click', event => {
-      statusElement.innerText = ""
-      const phoneNumber = document.getElementById("verify-phone-number").value;
-      if (phoneNumber !== "") {
-        submitVerifyPhoneButton.disabled = true
-        axios.post(window.location.origin + '/verify', {
-            phoneNumber
-        })
-        .then((response) => {
-          console.log("response ", response)
-            if (response.data.request_id) {
-              // Hide All Sections 
-              Array.from(sections).forEach((section) => {
-                section.classList.remove('is-shown')
-              });
-              // Show Code Verification Section
-              document.getElementById("verify-code").classList.add('is-shown')
-              request_id = response.data.request_id
-              loggedInPhoneNumber = phoneNumber
-            }
-        })
-        .catch((error) => {
-          console.log("error ", error)
-            statusElement.innerText = `Verification Error: ${error.response.data.detail}`;
-        })
-        .finally(() => {
-          submitVerifyPhoneButton.disabled = false
-        })
-      } else {
-        statusElement.innerText = 'Please enter your phone number.';
-      }
-    })
-
-    submitVerifyCodeButton.addEventListener('click', event => {
-      statusElement.innerText = ""
-      const code = document.getElementById("code").value;
-      if (code !== "") {
-        submitVerifyCodeButton.disabled = true
-        axios.post(window.location.origin + '/checkCode', {
-            request_id,
-            code
-        })
-        .then((response) => {
-            if (response.data.status == 'completed') {
-              // Hide All Sections 
-              Array.from(sections).forEach((section) => {
-                section.classList.remove('is-shown')
-              });
-              // Show Contact Center section
-              request_id = null
-              document.getElementById('departments').classList.add('is-shown')
-              updateSectionUI('idle')
-              recreateSession(department.value)
-            } else {
-              statusElement.innerText = `Verification Error: ${response.status}`;
-            }
-        })
-        .catch((error) => {
-            statusElement.innerText = `Verification Error: ${error.response.data.detail}`;
-        })
-        .finally(() => {
-          submitVerifyCodeButton.disabled = false
-        })
-      } else {
-        statusElement.innerText = 'Please enter your verification code.';
-      }
-    })
     
   </script>
 </body>
