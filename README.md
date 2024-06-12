@@ -2,15 +2,6 @@
 A branded incoming call involves tailoring the call display with the company's name, logo, and pertinent details, thereby promoting professionalism, trust, and improved customer interaction. 
 This reference app demonstrates how to generate a branded call from a web contact center to a mobile app user.
 
-## Setup Push Notification
-### iOS: 
-1. Generate Push Cert: [Link](https://developer.vonage.com/en/vonage-client-sdk/set-up-push-notifications/ios#generating-a-push-certificate)
-1. Upload your Push Cert: [Link](https://developer.vonage.com/en/vonage-client-sdk/set-up-push-notifications/ios#upload-your-certificate)
-
-### Android:
-1. Connect your application to Firebase: [Link](https://developer.vonage.com/en/vonage-client-sdk/set-up-push-notifications/android#connect-your-vonage-application-to-firebase)
-1. Add google-services.json into the Android app module root directory: [Link](https://developer.vonage.com/en/vonage-client-sdk/set-up-push-notifications/android#add-firebase-configuration-to-your-application)
-
 ## Backend Server
 1. Create an Vonage application: [Vonage Application](https://dashboard.nexmo.com/applications/new)
 1. Go to `backend` folder
@@ -21,6 +12,15 @@ This reference app demonstrates how to generate a branded call from a web contac
     Answer url (POST): {your_server}/voice/answer \
     Event url (POST): {your_server}/voice/answer
 1. Open your browser and go to {your_server}/contact-center, you may place a call to mobile app user there.
+
+## Setup Push Notification
+### iOS: 
+1. Generate Push Cert: [Link](https://developer.vonage.com/en/vonage-client-sdk/set-up-push-notifications/ios#generating-a-push-certificate)
+1. Upload your Push Cert: [Link](https://developer.vonage.com/en/vonage-client-sdk/set-up-push-notifications/ios#upload-your-certificate)
+
+### Android:
+1. Connect your application to Firebase: [Link](https://developer.vonage.com/en/vonage-client-sdk/set-up-push-notifications/android#connect-your-vonage-application-to-firebase)
+1. Add google-services.json into the Android app module root directory: [Link](https://developer.vonage.com/en/vonage-client-sdk/set-up-push-notifications/android#add-firebase-configuration-to-your-application)
 
 ## iOS
 1. Go to `iOS` folder
