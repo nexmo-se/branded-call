@@ -99,6 +99,41 @@ app.post('/voice/answer', (req, res) => {
   console.log(`  - callee: ${req.body}`);
   console.log('---');
 
+  if (isNaN(req.body.to)) {
+    let to = ""
+    switch(req.body.to) {
+      case "Refund Request":
+        to = "12013744445"
+        break;
+      case "Zendesk Report":
+        to = "12013744446"
+        break;
+        case "API Query":
+          to = "12013744447"
+          break;
+      default:
+        to = "12013744448"
+    }
+
+    let ncco = [
+      {
+        "action": "talk",
+        "text": "Please wait while we connect you to an agent"
+      },
+      {
+        "action": "connect",
+        "from": req.body.from,
+        "endpoint": [
+          {
+          "type": "app",
+          "user": to
+        }
+       ]
+      }
+    ]
+    return res.json(ncco)
+  }
+
   let ncco = [
     {
       "action": "talk",
