@@ -6,7 +6,8 @@ This reference app demonstrates how to generate a branded call from a web contac
 1. Create an Vonage application: [Vonage Application](https://dashboard.nexmo.com/applications/new)
 1. Go to `backend` folder
 1. Run npm install to install all dependencies from NPM.
-1. Copy the env.example file to .env and fill the variables needed
+1. Copy the .env.example file to .env and fill the variables needed
+1. Run `npm run start` to start the server
 1. Expose the server to public (you may use ngrok)
 1. Enable Voice Capability in your Vonage Application and paste the server url into: \
     Answer url (POST): {your_server}/voice/answer \
@@ -27,7 +28,7 @@ This reference app demonstrates how to generate a branded call from a web contac
 1. Run `pod install` to install the dependencies
 1. Open your project in Xcode using the .xcworkspace file
 1. Go to Uitls/Configuration.swift File and paste your backend server url to `backendServer`.
-1. Connect your device and run the project.
+1. Connect your device and run the project. \
 Note: Run it on real device, as the simulator might not works for callkit and/or voip push
 
 ## Android

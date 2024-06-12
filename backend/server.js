@@ -17,8 +17,8 @@ app.use(express.static(path.join(__dirname, 'public')));
 
 
 const restAPI = 'https://api-ap-3.vonage.com/v0.3'
-const applicationId = process.env.APPLICATION_ID
-const privateKey = fs.readFileSync(process.env.PRIVATE_KEY);
+const applicationId = process.env.VONAGE_APPLICATION_ID
+const privateKey = fs.readFileSync(process.env.VONAGE_PRIVATE_KEY_PATH);
 
 const credentials = {
   applicationId,
