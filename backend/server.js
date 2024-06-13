@@ -1,3 +1,4 @@
+import {Vonage} from '@vonage/server-sdk';
 import { tokenGenerate } from '@vonage/jwt';
 import express from 'express';
 import * as dotenv from 'dotenv';
@@ -25,6 +26,10 @@ const credentials = {
   privateKey,
 };
 const options = {};
+
+const vonage = new Vonage(credentials, options);
+
+const failStatus = ["timeout"];
 
 const aclPaths = {
     "paths": {
@@ -99,6 +104,7 @@ app.post('/voice/answer', (req, res) => {
   console.log(`  - callee: ${req.body}`);
   console.log('---');
 
+  // Call from mobile app user to contact center
   if (isNaN(req.body.to)) {
     let to = ""
     switch(req.body.to) {
@@ -115,6 +121,7 @@ app.post('/voice/answer', (req, res) => {
         to = "12013744448"
     }
 
+    // Call to contact center webapp
     let ncco = [
       {
         "action": "talk",
@@ -131,6 +138,27 @@ app.post('/voice/answer', (req, res) => {
        ]
       }
     ]
+
+    // Call to contact center sip
+    /*
+    let ncco = [
+      {
+        "action": "talk",
+        "text": "Please wait while we connect you to an agent"
+      },
+      {
+        "action": "connect",
+        "from": req.body.from,
+        "endpoint": [
+          {
+            "type": "sip",
+            "uri": process.env.CC_SIP, // connect to sip
+            "headers": { "User-to-User": req.body.to }  // passing user information to sip header
+          }
+        ]
+      }
+    ]
+    */
     return res.json(ncco)
   }
 
@@ -141,41 +169,100 @@ app.post('/voice/answer', (req, res) => {
     }
   ]
 
-  // Intent mapping
-  let from = "" 
-  let switchCase = req.body.from ?? req.body.from_user
-  switch(switchCase) {
-    case "12013744445":
-      from = "Vonage API Refund Request #3788"
-      break;
-    case "12013744446":
-      from = "Vonage Zendesk Report #9125"
-      break;
-      case "12013744447":
-        from = "Vonage API Query Case #367 "
-        break;
-    default:
-      from = "Vonage Customer Support"
-  }
+  axios.get(`${restAPI}/users?name=${req.body.to}`, { headers: {"Authorization" : `Bearer ${generateJwt()}`} })
+  .then(async (result) => {
+    console.log("user exist", result.data._embedded.users[0].name)
+      // Intent mapping
+      let from = ""
+      let switchCase = req.body.from ?? req.body.from_user
+      switch(switchCase) {
+        case "12013744445":
+          from = "Vonage API Refund Request #3788"
+          break;
+        case "12013744446":
+          from = "Vonage Zendesk Report #9125"
+          break;
+          case "12013744447":
+            from = "Vonage API Query Case #367 "
+            break;
+        default:
+          from = "Vonage Customer Support"
+      }
 
-  ncco.push ({
+      // If user exist, call to user's mobile app
+      ncco.push ({
+          "action": "connect",
+          "from": from,
+          "timeout" : 25,
+          "eventType": "synchronous",
+          "endpoint": [
+            {
+              "type": "app",
+              "user": req.body.to
+            }
+          ]
+      })
+      res.json(ncco)
+  })
+  .catch(error => {
+    // If user not exist, call to user's PSTN number
+    ncco.push ({
       "action": "connect",
-      "from": from,
+      "from": process.env.VONAGE_PHONE_NUMBER,
       "endpoint": [
         {
-          "type": "app",
-          "user": req.body.to
+          "type": "phone",
+          "number": req.body.to
         }
       ]
+    })
+
+      res.json(ncco)
   })
-  res.json(ncco)
 });
 
 app.all('/voice/event', (req, res) => {
   console.log('EVENT:');
   console.dir(req.body);
   console.log('---');
-  res.sendStatus(200);
+
+  // If mobile app user no pick up, fallback to PSTN call
+  if (failStatus.includes(req.body.status)) {
+    vonage.voice.getCall(req.body.uuid)
+    .then(async resp => {
+      console.log("event getcall response ", resp)
+
+      if (resp.to.type == "app") {
+        // Fallback to phone call
+        const ncco = [
+          {
+            "action": "talk",
+            "text": "Fallback to pstn call"
+          },
+          {
+          "action": "connect",
+          "from": process.env.VONAGE_PHONE_NUMBER,
+          "endpoint": [
+            {
+              "type": "phone",
+              "number": req.body.to
+            }
+          ]
+        }
+        ]
+        res.json(ncco)
+      }
+      else {
+        res.sendStatus(200);
+      }
+    })
+    .catch(err => {
+      console.error(err)
+      res.sendStatus(200);
+    });
+  } else {
+    res.sendStatus(200);
+  }
 });
 
 function deleteUser(userId) {
