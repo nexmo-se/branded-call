@@ -162,6 +162,7 @@
     });
 
     updateSectionUI('idle')
+    recreateSession(department.value)
 
     client.on('legStatusUpdate', (callId, legId, status) => {
       console.log("call id", callId)
