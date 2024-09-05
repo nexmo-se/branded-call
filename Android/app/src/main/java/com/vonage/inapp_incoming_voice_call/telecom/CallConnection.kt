@@ -7,37 +7,38 @@ import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
 import android.graphics.BitmapFactory
-import android.graphics.Color
 import android.media.AudioAttributes
 import android.media.RingtoneManager
 import android.net.Uri
-import android.os.Build
 import android.telecom.CallAudioState
 import android.telecom.Connection
 import android.telecom.DisconnectCause
-import androidx.annotation.RequiresApi
 import androidx.core.app.NotificationCompat
 import com.vonage.clientcore.core.api.CallId
 import com.vonage.inapp_incoming_voice_call.App
 import com.vonage.inapp_incoming_voice_call.R
+import com.vonage.inapp_incoming_voice_call.receivers.CallBroadcastReceiver
+import com.vonage.inapp_incoming_voice_call.utils.Constants
 import com.vonage.inapp_incoming_voice_call.views.CallActivity
+import com.vonage.inapp_incoming_voice_call.views.MainActivity
 
 
 /**
  * A Connection class used to initiate a connection
  * when a User receives an incoming or outgoing call
  */
-class CallConnection(val context: Context, val callId: CallId, val from: String?) : Connection() {
+class CallConnection(val callId: CallId, val from: String) : Connection() {
     private val coreContext = App.coreContext
     private val clientManager = coreContext.clientManager
+    private val context = coreContext.applicationContext
     private val notificationManager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
 
-
     var isMuted = false
-    init {
-        // Update active call only if current is null
-        coreContext.activeCall = coreContext.activeCall ?: this
+        private set
+    var isOnHold = false
+        private set
 
+    init {
         val properties = connectionProperties or PROPERTY_SELF_MANAGED
         connectionProperties = properties
 
@@ -46,40 +47,7 @@ class CallConnection(val context: Context, val callId: CallId, val from: String?
 
         audioModeIsVoip = true
     }
-    override fun onAnswer() {
-        clientManager.answerCall(this)
-    }
 
-    override fun onReject() {
-        clientManager.rejectCall(this)
-    }
-
-    override fun onDisconnect() {
-        clientManager.hangupCall(this)
-    }
-
-    override fun onAbort() {
-        clientManager.hangupCall(this)
-    }
-
-    override fun onCallAudioStateChanged(state: CallAudioState?) {
-        state ?: return
-        // Trigger mute/unmute only if states are not consistent
-        val shouldMute = state.isMuted
-        if (shouldMute != this.isMuted) {
-            val muteAction = if (shouldMute) clientManager::muteCall else clientManager::unmuteCall
-            muteAction(this)
-        }
-        val route = state.route
-        println("isMuted: $isMuted, route: $route")
-    }
-
-    override fun onPlayDtmfTone(c: Char) {
-        println("Dtmf Char received: $c")
-        clientManager.sendDtmf(this, c.toString())
-    }
-
-    @RequiresApi(Build.VERSION_CODES.S)
     override fun onShowIncomingCallUi() {
         super.onShowIncomingCallUi()
 
@@ -105,20 +73,23 @@ class CallConnection(val context: Context, val callId: CallId, val from: String?
         notificationManager.getNotificationChannel("notification-channel")
 
         // Answer Action
-        val answerIntent = Intent(CallActivity.MESSAGE_ACTION).apply {
-            putExtra(CallActivity.CALL_ACTION, CallActivity.ANSWER_ACTION)
+        val answerAction = Intent(context, CallBroadcastReceiver::class.java).apply {
+            putExtra(CallActivity.CALL_ACTION, CallActivity.CALL_ACTION_ANSWER)
         }
+        val answerPendingIntent =
+            PendingIntent.getBroadcast(context, 1, answerAction, PendingIntent.FLAG_IMMUTABLE)
 
-        val answerPendingIntent: PendingIntent =
-            PendingIntent.getBroadcast(context, 0, answerIntent, PendingIntent.FLAG_MUTABLE)
 
         // Reject Action
-        val rejectIntent = Intent(CallActivity.MESSAGE_ACTION).apply {
-            putExtra(CallActivity.CALL_ACTION, CallActivity.REJECT_ACTION)
+        val rejectAction = Intent(context, CallBroadcastReceiver::class.java).apply {
+            putExtra(CallActivity.CALL_ACTION, CallActivity.CALL_ACTION_REJECT)
         }
+        val rejectPendingIntent =
+            PendingIntent.getBroadcast(context, 2, rejectAction, PendingIntent.FLAG_IMMUTABLE)
 
-        val rejectPendingIntent: PendingIntent =
-            PendingIntent.getBroadcast(context, 1, rejectIntent, PendingIntent.FLAG_MUTABLE)
+        // to avoid notification hidden after seconds
+        val fullScreenIntent = Intent(context, MainActivity::class.java)
+        val fullScreenPendingIntent = PendingIntent.getActivity(context, 3, fullScreenIntent, PendingIntent.FLAG_IMMUTABLE)
 
         // Create the notification builder
         val bm = BitmapFactory.decodeResource(context.resources, R.drawable.vonage_logo)
@@ -128,17 +99,66 @@ class CallConnection(val context: Context, val callId: CallId, val from: String?
             .setLargeIcon(bm)
             .setContentTitle("Vonage")
             .setContentText(from)
-            .setPriority(NotificationCompat.PRIORITY_HIGH)
+            .setPriority(NotificationCompat.PRIORITY_MAX)
             .setCategory(NotificationCompat.CATEGORY_CALL)
             .addAction(R.drawable.vonage_logo, "Answer", answerPendingIntent)
             .addAction(R.drawable.vonage_logo, "Reject", rejectPendingIntent)
             .setAutoCancel(false)
+            .setFullScreenIntent(fullScreenPendingIntent,true)
             .setOngoing(true)
 
         val notification = builder.build()
         notification.flags = notification.flags or Notification.FLAG_NO_CLEAR
         // Show the notification
-        notificationManager.notify(123, notification)
+        notificationManager.notify(Constants.NOTIFICATION_ID, notification)
+    }
+
+    override fun onStateChanged(state: Int) {
+        when(state){
+            STATE_RINGING, STATE_DIALING -> { setActiveCall() }
+            STATE_DISCONNECTED -> { clearActiveCall() }
+        }
+    }
+
+    override fun onAnswer() {
+        clientManager.answerCall(this)
+    }
+
+    override fun onReject() {
+        clientManager.rejectCall(this)
+    }
+
+    override fun onDisconnect() {
+        clientManager.hangupCall(this)
+    }
+
+    override fun onCallAudioStateChanged(state: CallAudioState?) {
+        state ?: return
+        // Trigger mute/unmute only if states are not consistent
+        val shouldMute = state.isMuted
+        if (shouldMute != this.isMuted) {
+            val muteAction = if (shouldMute) clientManager::muteCall else clientManager::unmuteCall
+            muteAction(this)
+        }
+        val route = state.route
+        println("isMuted: $isMuted, route: $route")
+    }
+
+    override fun onPlayDtmfTone(c: Char) {
+        println("Dtmf Char received: $c")
+        clientManager.sendDtmf(this, c.toString())
+    }
+
+    override fun onHold() {
+        if(!isOnHold){
+            clientManager.holdCall(this)
+        }
+    }
+
+    override fun onUnhold() {
+        if(isOnHold){
+            clientManager.unholdCall(this)
+        }
     }
 
     fun selfDestroy(){
@@ -147,10 +167,28 @@ class CallConnection(val context: Context, val callId: CallId, val from: String?
         destroy()
     }
 
-    fun clearActiveCall(){
+    fun disconnect(disconnectCause: DisconnectCause){
+        println("[$callId] Connection is being disconnected with cause [$disconnectCause]")
+        setDisconnected(disconnectCause)
+        destroy()
+    }
+
+    private fun setActiveCall(){
+        // Update active call only if current is null
+        coreContext.activeCall = coreContext.activeCall ?: this
+    }
+
+    fun toggleHoldState(){
+        isOnHold = !isOnHold
+        if(isOnHold) setOnHold() else setActive()
+    }
+
+    fun toggleMuteState(){
+        isMuted = !isMuted
+    }
+
+    private fun clearActiveCall(){
         // Reset active call only if it was the current one
         coreContext.activeCall?.takeIf { it == this }?.let { coreContext.activeCall = null }
     }
-
-
 }

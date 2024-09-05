@@ -1,46 +1,46 @@
 package com.vonage.inapp_incoming_voice_call.core
 
 import android.content.Context
-import androidx.lifecycle.MutableLiveData
-import com.vonage.inapp_incoming_voice_call.models.User
+import com.google.gson.Gson
+import com.vonage.inapp_incoming_voice_call.models.CallInfo
 import com.vonage.inapp_incoming_voice_call.telecom.CallConnection
 import com.vonage.inapp_incoming_voice_call.telecom.TelecomHelper
+import com.vonage.inapp_incoming_voice_call.utils.Constants
 import com.vonage.inapp_incoming_voice_call.utils.PrivatePreferences
+
 
 
 /**
  * A singleton class for storing and accessing Core Application Data
  */
 class CoreContext private constructor(context: Context) {
-    private val applicationContext: Context = context.applicationContext
+    val applicationContext: Context = context.applicationContext
     val telecomHelper: TelecomHelper by lazy { TelecomHelper(applicationContext) }
     val clientManager: VoiceClientManager by lazy { VoiceClientManager(applicationContext) }
-    var sessionId: String? = null
-    var activeCall:CallConnection? = null
+    private val gson = Gson()
+    var activeCall: CallConnection? = null
+        set(value) {
+            PrivatePreferences.set(PrivatePreferences.CALL_ID, value?.callId, applicationContext)
+            PrivatePreferences.set(PrivatePreferences.CALLER_DISPLAY_NAME, value?.callerDisplayName, applicationContext)
+            field = value
+        }
 
-    object CallMuteState {
-        val isMuted: MutableLiveData<Boolean> by lazy {
-            MutableLiveData<Boolean>()
-        }
-    }
     /**
-     * The last Username logged.
+     * The Last Active Call's details.
+     * We persist them for Call reconnection.
      */
-    var user: User? get() {
-        if (PrivatePreferences.get(PrivatePreferences.USERNAME, applicationContext) == null) {
-            return null
+    val lastActiveCall: CallInfo?
+        get() = PrivatePreferences.get(PrivatePreferences.CALL_ID, applicationContext)?.let { callId ->
+            CallInfo(callId, PrivatePreferences.get(PrivatePreferences.CALLER_DISPLAY_NAME, applicationContext) ?: Constants.DEFAULT_DIALED_NUMBER)
         }
-        return User(
-            PrivatePreferences.get(PrivatePreferences.DISPLAY_NAME, applicationContext)!!,
-            PrivatePreferences.get(PrivatePreferences.USERNAME, applicationContext)!!,
-            PrivatePreferences.get(PrivatePreferences.USER_ID, applicationContext)!!,
-            PrivatePreferences.get(PrivatePreferences.TOKEN, applicationContext)!!
-        )
-    } set(user) {
-        PrivatePreferences.set(PrivatePreferences.DISPLAY_NAME, user?.displayName, applicationContext)
-        PrivatePreferences.set(PrivatePreferences.USERNAME, user?.username, applicationContext)
-        PrivatePreferences.set(PrivatePreferences.USER_ID, user?.userId, applicationContext)
-        PrivatePreferences.set(PrivatePreferences.TOKEN, user?.token, applicationContext)
+
+    /**
+     * The last valid Vonage API Token used to create a session.
+     */
+    var authToken: String? get() {
+        return PrivatePreferences.get(PrivatePreferences.AUTH_TOKEN, applicationContext)
+    } set(value) {
+        PrivatePreferences.set(PrivatePreferences.AUTH_TOKEN, value, applicationContext)
     }
 
     /**
@@ -61,6 +61,16 @@ class CoreContext private constructor(context: Context) {
         PrivatePreferences.set(PrivatePreferences.DEVICE_ID, value, applicationContext)
     }
 
+    /**
+     * For auto-login.
+     */
+    var user: com.vonage.clientcore.core.api.models.User? get() {
+        val userString = PrivatePreferences.get(PrivatePreferences.USER, applicationContext)
+        return gson.fromJson(userString, com.vonage.clientcore.core.api.models.User::class.java)
+    } set(value) {
+        val userString = gson.toJson(value)
+        PrivatePreferences.set(PrivatePreferences.USER, userString, applicationContext)
+    }
     companion object {
         // Volatile will guarantee a thread-safe & up-to-date version of the instance
         @Volatile

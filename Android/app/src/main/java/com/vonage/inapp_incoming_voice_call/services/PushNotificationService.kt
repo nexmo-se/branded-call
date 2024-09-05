@@ -1,4 +1,4 @@
-package com.vonage.inapp_incoming_voice_call.push
+package com.vonage.inapp_incoming_voice_call.services
 
 import com.google.firebase.messaging.FirebaseMessaging
 import com.google.firebase.messaging.FirebaseMessagingService
@@ -23,9 +23,7 @@ class PushNotificationService : FirebaseMessagingService() {
         }
     }
     override fun onNewToken(token: String) {
-        super.onNewToken(token)
-        println("New FCM Device Push Token:  $token")
-        // Set new Push Token
+        println("New FCM Device Push Token: $token")
         App.coreContext.pushToken = token
     }
     override fun onMessageReceived(remoteMessage: RemoteMessage) {
@@ -33,13 +31,13 @@ class PushNotificationService : FirebaseMessagingService() {
         // If there is no active session then
         // Create one using the latest valid Auth Token and notify the ClientManager
         // Else notify the ClientManager directly
-        App.coreContext.run {
-            if (sessionId == null) {
-                val user = user ?: return@run
-                clientManager.login(user, onSuccessCallback = {
-                    clientManager.processIncomingPush(remoteMessage)
-                })
 
+        App.coreContext.run {
+            if (clientManager.sessionId == null) {
+                val token = authToken ?: return@run
+                clientManager.login(token) {
+                    clientManager.processIncomingPush(remoteMessage)
+                }
             } else {
                 clientManager.processIncomingPush(remoteMessage)
             }

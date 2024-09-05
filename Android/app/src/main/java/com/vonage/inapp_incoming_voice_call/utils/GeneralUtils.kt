@@ -1,6 +1,5 @@
 package com.vonage.inapp_incoming_voice_call.utils
 
-import android.app.KeyguardManager
 import android.content.Context
 import android.content.DialogInterface
 import android.content.Intent
@@ -12,8 +11,6 @@ import android.widget.ScrollView
 import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
-import androidx.core.os.postDelayed
-import com.vonage.inapp_incoming_voice_call.views.CallActivity
 import com.vonage.inapp_incoming_voice_call.views.LoginActivity
 import java.util.*
 

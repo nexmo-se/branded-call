@@ -8,13 +8,14 @@
     <uses-permission android:name="android.permission.MANAGE_OWN_CALLS"/>
     <uses-permission android:name="android.permission.READ_PHONE_NUMBERS"/>
     <!--    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />-->
-<!--    <uses-permission android:name="android.permission.ACCESS_WIFI_STATE" />-->
-<!--    <uses-permission android:name="android.permission.CHANGE_WIFI_STATE" />-->
+    <!--    <uses-permission android:name="android.permission.ACCESS_WIFI_STATE" />-->
+    <!--    <uses-permission android:name="android.permission.CHANGE_WIFI_STATE" />-->
     <uses-permission android:name="android.permission.MODIFY_AUDIO_SETTINGS" />
     <uses-permission android:name="android.permission.RECORD_AUDIO" />
     <uses-permission android:name="android.permission.USE_FULL_SCREEN_INTENT" />
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS"/>
     <uses-permission android:name="android.permission.CALL_PHONE"/>
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
     <application
         android:name=".App"
         android:allowBackup="true"
@@ -44,6 +45,18 @@
                 android:value="" />
         </activity>
         <activity
+            android:name=".views.MainActivity"
+            android:screenOrientation="portrait"
+            tools:ignore="LockedOrientationActivity"
+            android:showOnLockScreen="true"
+            android:turnScreenOn="true"
+            android:showWhenLocked="true"
+            android:exported="false">
+            <meta-data
+                android:name="android.app.lib_name"
+                android:value=""/>
+        </activity>
+        <activity
             android:name=".views.CallActivity"
             android:screenOrientation="portrait"
             tools:ignore="LockedOrientationActivity"
@@ -56,11 +69,17 @@
                 android:value=""/>
         </activity>
         <service
-            android:name=".push.PushNotificationService"
+            android:name=".services.PushNotificationService"
             android:exported="false">
             <intent-filter>
                 <action android:name="com.google.firebase.MESSAGING_EVENT"/>
+                <action android:name="com.google.firebase.INSTANCE_ID_EVENT"/>
             </intent-filter>
+        </service>
+        <service
+            android:name=".services.AudioRecorderService"
+            android:exported="false"
+            android:foregroundServiceType="microphone">
         </service>
         <service
             android:name=".telecom.CallConnectionService"
@@ -73,6 +92,7 @@
 
         <receiver
             android:name=".receivers.CallBroadcastReceiver"
+            android:enabled = "true"
             android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.PHONE_STATE" />

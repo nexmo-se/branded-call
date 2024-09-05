@@ -8,15 +8,16 @@ Note: A minimum version of Xcode 14.x is required to build and run.
 
 To install, first make sure you have [CocoaPods](https://cocoapods.org) installed on your system. Then, follow these steps:
 
+## iOS
 1. Clone this repository
-2. Run `pod install` in the project directory to install the required dependencies
-3. Open `Vonage.xcworkspace` in Xcode
-4. Build and run the app
+1. Go to `iOS` folder
+1. Run `pod install` to install the dependencies
+1. Open your project in Xcode using the .xcworkspace file
+1. Go to Uitls/Configuration.swift File and paste your backend server url to `backendServer`.
+1. Connect your device and run the project. \
+Note: Run it on real device, as the simulator might not works for callkit and/or voip push
 
-## Usage
+## Setup Push Notification
+1. Generate Push Cert: [Link](https://developer.vonage.com/en/vonage-client-sdk/set-up-push-notifications/ios#generating-a-push-certificate)
+1. Upload your Push Cert: [Link](https://developer.vonage.com/en/vonage-client-sdk/set-up-push-notifications/ios#upload-your-certificate)
 
-Authentication has been left blank, see `UserController.swift`
-
-## License
-
-Released under the MIT license. See [LICENSE](LICENSE) for details.

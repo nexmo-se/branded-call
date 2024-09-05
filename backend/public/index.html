@@ -207,6 +207,11 @@
       updateSectionUI('ringing')
     });
 
+    client.on('callInviteCancel', (_callId, reason) => {
+      callId = null;
+      updateSectionUI('idle')
+    });
+
     function recreateSession(department) {
         callButton.style.display = "none"
         axios.post(window.location.origin + '/getCredential', {

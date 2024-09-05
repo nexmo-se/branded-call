@@ -11,8 +11,6 @@ import android.os.Bundle
 import android.telecom.PhoneAccount
 import android.telecom.PhoneAccountHandle
 import android.telecom.TelecomManager
-import android.telecom.TelecomManager.EXTRA_HAS_PICTURE
-import android.telecom.TelecomManager.EXTRA_PICTURE_URI
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import com.vonage.clientcore.core.api.CallId
@@ -21,6 +19,8 @@ import com.vonage.clientcore.core.conversation.VoiceChannelType
 import com.vonage.inapp_incoming_voice_call.R
 import com.vonage.inapp_incoming_voice_call.utils.Constants
 import com.vonage.inapp_incoming_voice_call.utils.showToast
+
+typealias PhoneNumber = String
 
 /**
  * This Class will act as an interface
@@ -56,6 +56,7 @@ class TelecomHelper(private val context: Context) {
         PhoneAccount
             .builder(phoneAccountHandle, CUSTOM_PHONE_ACCOUNT_NAME)
             .setCapabilities(PhoneAccount.CAPABILITY_CALL_PROVIDER)
+            // To handle calls with your custom UI change it to:
             .setCapabilities(PhoneAccount.CAPABILITY_SELF_MANAGED)
             .setIcon(Icon.createWithResource(context, R.drawable.vonage_logo))
             .build()
@@ -85,35 +86,44 @@ class TelecomHelper(private val context: Context) {
     /**
      * This method triggers the connection service and shows the System Incoming Call UI to handle incoming calls.
      */
-    fun startIncomingCall(callId:CallId, from:Username, type: VoiceChannelType){
-        checkCallPermissions()
+    fun startIncomingCall(callId:CallId, from:Username, type:VoiceChannelType){
+        println(("Call from: ${from}, via channel $callId, channelType: $type"))
+        checkPermission(false)
         val extras = Bundle()
         extras.putString(Constants.EXTRA_KEY_CALL_ID, callId)
         extras.putString(Constants.EXTRA_KEY_FROM, from)
         telecomManager.addNewIncomingCall(phoneAccountHandle, extras)
     }
 
-    fun startOutgoingCall(callId:CallId, to: String){
+    /**
+     * This method places VoIP calls on behalf of the app.
+     */
+    fun startOutgoingCall(callId:CallId, to: PhoneNumber, isReconnected:Boolean = false){
         println(("Calling Server with callId: $callId"))
-        checkCallPermissions()
+        checkPermission(true)
         val rootExtras = Bundle()
         val extras = Bundle()
         extras.putString(Constants.EXTRA_KEY_TO, to)
         extras.putString(Constants.EXTRA_KEY_CALL_ID, callId)
+        extras.putBoolean(Constants.EXTRA_KEY_RECONNECTED, isReconnected)
         rootExtras.putParcelable(TelecomManager.EXTRA_PHONE_ACCOUNT_HANDLE, phoneAccountHandle)
         rootExtras.putParcelable(TelecomManager.EXTRA_OUTGOING_CALL_EXTRAS, extras)
-        telecomManager.placeCall(Uri.parse("tel:$to"), rootExtras)
+        telecomManager.placeCall(Uri.parse("tel:123"), rootExtras)
     }
-    private fun checkCallPermissions(){
+
+    private fun checkPermission(isOutgoingCall: Boolean){
         val isManageOwnCallsPermitted = ActivityCompat.checkSelfPermission(context, Manifest.permission.MANAGE_OWN_CALLS) == PackageManager.PERMISSION_GRANTED
         val isCallPhonePermitted = ActivityCompat.checkSelfPermission(context, Manifest.permission.CALL_PHONE) == PackageManager.PERMISSION_GRANTED
         val isIncomingCallPermitted = try {
+            // This method might throw on some devices (e.g. Xiaomi)
             telecomManager.isIncomingCallPermitted(phoneAccountHandle)
         } catch (_ : Exception){ true }
         val isOutgoingCallPermitted = telecomManager.isOutgoingCallPermitted(phoneAccountHandle)
         // Throw the appropriate error
         if(!isManageOwnCallsPermitted) throw Exception("MANAGE_OWN_CALLS Permission Not granted")
-        if(!isIncomingCallPermitted) throw Exception("Incoming Call Not Permitted by System")
+        if(isOutgoingCall && !isCallPhonePermitted) throw Exception("CALL_PHONE Permission Not granted")
+        if(isOutgoingCall && !isOutgoingCallPermitted) throw Exception("Outgoing Call Not Permitted by System")
+        if(!isOutgoingCall && !isIncomingCallPermitted) throw Exception("Incoming Call Not Permitted by System")
 //        if(!isPhoneAccountEnabled) throw Exception("$CUSTOM_PHONE_ACCOUNT_NAME Phone Account Not Enabled")
     }
 }

@@ -11,22 +11,155 @@
         <include layout = "@layout/app_bar"
             android:id="@+id/tbCall"/>
     </RelativeLayout>
-
     <androidx.constraintlayout.widget.ConstraintLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:layout_marginTop="72dp">
-        <androidx.fragment.app.FragmentContainerView
-            android:id="@+id/fcCallStatus"
+        <androidx.constraintlayout.widget.ConstraintLayout
+            android:id="@+id/clActiveCall"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="24dp"
-            app:layout_constraintVertical_bias="0"
+            android:paddingLeft="42dp"
+            android:paddingRight="42dp"
+            app:layout_constraintVertical_bias="0.25"
             app:layout_constraintTop_toTopOf="parent"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintBottom_toBottomOf="parent"
-            tools:layout="@layout/fragment_idlecall">
-        </androidx.fragment.app.FragmentContainerView>
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent">
+            <Chronometer
+                android:id="@+id/cmCallTimer"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:textAlignment="center"
+                android:textColor="@color/black"
+                android:textSize="22sp"
+                android:visibility="gone"
+                android:layout_marginBottom="24dp"
+                app:layout_constraintTop_toTopOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintBottom_toTopOf="@+id/tvCallFrom"
+                tools:text="Call Duration - 0.00"
+                />
+            <TextView
+                android:id="@+id/tvCallFrom"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:textAlignment="center"
+                android:textColor="@color/black"
+                android:textSize="28sp"
+                android:textStyle="bold"
+                android:layout_marginBottom="28dp"
+                app:layout_constraintTop_toBottomOf="@+id/cmCallTimer"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintBottom_toTopOf="@+id/ivPhone"
+                tools:text="Home Loan Payment Overdue"
+                />
+            <ImageView
+                android:id="@+id/ivPhone"
+                android:layout_width="match_parent"
+                android:layout_height="120dp"
+                android:src="@drawable/vonage"
+                app:layout_constraintTop_toBottomOf="@+id/tvCallFrom"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintBottom_toTopOf="@+id/svCallActions"
+                android:contentDescription="@string/call_icon"
+                >
+            </ImageView>
+            <androidx.constraintlayout.widget.ConstraintLayout
+                android:id="@+id/svCallActions"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="30dp"
+                android:layout_marginEnd="30dp"
+                android:layout_marginTop="24dp"
+                app:layout_constraintTop_toBottomOf="@+id/ivPhone"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintEnd_toEndOf="parent"
+                >
+                <androidx.appcompat.widget.AppCompatButton
+                    android:id="@+id/btMute"
+                    android:layout_width="60dp"
+                    android:layout_height="60dp"
+                    android:backgroundTint="@color/blue"
+                    android:visibility="gone"
+                    android:background="@drawable/rounded_background"
+                    android:paddingTop="12dp"
+                    android:contentDescription="@string/mute"
+                    android:drawableTop="@drawable/ic_baseline_mic_on"
+                    app:layout_constraintHorizontal_bias="0"
+                    app:layout_constraintTop_toTopOf="parent"
+                    app:layout_constraintBottom_toBottomOf="parent"
+                    app:layout_constraintEnd_toEndOf="parent"
+                    app:layout_constraintStart_toStartOf="parent"
+                    />
+                <androidx.appcompat.widget.AppCompatButton
+                    android:id="@+id/btHangUp"
+                    android:layout_width="60dp"
+                    android:layout_height="60dp"
+                    android:textAllCaps="false"
+                    android:visibility="gone"
+                    android:textColor="@color/white"
+                    android:backgroundTint="@color/red"
+                    android:background="@drawable/rounded_background"
+                    android:drawableTop="@drawable/ic_baseline_call_end"
+                    android:contentDescription="@string/hangup"
+                    android:paddingTop="12dp"
+                    app:layout_constraintHorizontal_bias="1"
+                    app:layout_constraintTop_toTopOf="parent"
+                    app:layout_constraintBottom_toBottomOf="parent"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintEnd_toEndOf="parent"
+                    />
+                <androidx.appcompat.widget.AppCompatButton
+                    android:id="@+id/btAnswer"
+                    android:layout_width="60dp"
+                    android:layout_height="60dp"
+                    android:layout_marginEnd="16dp"
+                    android:backgroundTint="@color/dark_green"
+                    android:background="@drawable/rounded_background"
+                    android:drawableTop="@drawable/ic_baseline_call_start"
+                    android:paddingTop="12dp"
+                    android:contentDescription="@string/answer"
+                    app:layout_constraintHorizontal_bias="0"
+                    app:layout_constraintTop_toTopOf="parent"
+                    app:layout_constraintBottom_toBottomOf="parent"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintEnd_toEndOf="parent"
+                    />
+                <androidx.appcompat.widget.AppCompatButton
+                    android:id="@+id/btReject"
+                    android:layout_width="60dp"
+                    android:layout_height="60dp"
+                    android:textAllCaps="false"
+                    android:textColor="@color/white"
+                    android:backgroundTint="@color/red"
+                    android:background="@drawable/rounded_background"
+                    android:drawableTop="@drawable/ic_baseline_call_end"
+                    android:contentDescription="@string/hangup"
+                    android:paddingTop="12dp"
+                    app:layout_constraintHorizontal_bias="1"
+                    app:layout_constraintTop_toTopOf="parent"
+                    app:layout_constraintBottom_toBottomOf="parent"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintEnd_toEndOf="parent"
+                    />
+            </androidx.constraintlayout.widget.ConstraintLayout>
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:id="@+id/tvCallState"
+                tools:text="Call Reconnecting..."
+                android:layout_marginTop="24dp"
+                android:textColor="@color/red"
+                android:textAlignment="center"
+                android:textSize="24sp"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintTop_toBottomOf="@+id/svCallActions"
+                />
+        </androidx.constraintlayout.widget.ConstraintLayout>
     </androidx.constraintlayout.widget.ConstraintLayout>
 </androidx.drawerlayout.widget.DrawerLayout>

@@ -8,7 +8,6 @@ import android.view.View
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
-import androidx.recyclerview.widget.RecyclerView
 import com.vonage.inapp_incoming_voice_call.App
 import com.vonage.inapp_incoming_voice_call.api.APIRetrofit
 import com.vonage.inapp_incoming_voice_call.api.LoginInformation
@@ -90,13 +89,14 @@ class LoginActivity : AppCompatActivity() {
 
     override fun onResume() {
         super.onResume()
-        if (coreContext.sessionId != null) {
-            navigateToCallActivity()
+        clientManager.sessionId?.let {
+            navigateToMainActivity()
+            return
         }
-        else if (coreContext.user != null) {
+        if (coreContext.user != null) {
             // Refresh token
             val user = coreContext.user
-            login(user!!.displayName, user.username)
+            login(user!!.displayName ?: coreContext.user!!.name, coreContext.user!!.name)
         }
     }
     private fun login(displayName: String, phoneNumber: String) {
@@ -112,8 +112,8 @@ class LoginActivity : AppCompatActivity() {
             override fun onResponse(call: Call<User>, response: Response<User>) {
                 if (response.isSuccessful) {
                     response.body()?.let { it1 ->
-                        clientManager.login(it1, onSuccessCallback = {
-                            navigateToCallActivity()
+                        clientManager.login(it1.token, onSuccessCallback = {
+                            navigateToMainActivity()
                         }, onErrorCallback = {
                             Handler(Looper.getMainLooper()).post {
                                 binding.btLogin.isEnabled = true
