@@ -83,6 +83,7 @@ extension SceneDelegate {
             .sink { (user) in
                 if (user == nil) {
                     let loginVC = self.createViewController(LoginViewController.self)
+                    self.nav = nil //Needs to set this back to nil, or scene will not change to dialerVC when user tries to login again after logout - _beejay
                     self.window?.rootViewController = loginVC
                 }
                 else {
