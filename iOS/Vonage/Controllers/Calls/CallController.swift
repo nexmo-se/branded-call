@@ -207,7 +207,7 @@ extension VonageCallController {
             }
         }.store(in: &cancellables)
         
-        vonageToken.compactMap { $0 }.filter { $0 != "" }.first().flatMap { _ in
+        vonageToken.compactMap { $0 }.filter { $0 != "" }.flatMap { _ in
             Future<String?,Error> { p in
                 if (self.vonageSession.value == nil) {
                     self.client.createSession(self.vonageToken.value ?? "") { err, session in

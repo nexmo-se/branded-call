@@ -84,6 +84,7 @@ extension SceneDelegate {
                 if (user == nil) {
                     let loginVC = self.createViewController(LoginViewController.self)
                     self.window?.rootViewController = loginVC
+                    self.nav = nil
                 }
                 else {
                     if (self.nav == nil) {
@@ -119,10 +120,12 @@ extension SceneDelegate {
                 if (type(of:self.nav.topViewController) != ActiveCallViewController.self) {
                     let vc = ActiveCallViewController()
 
-                    self.nav.pushViewController(vc, animated: true)
                     call
                         .receive(on: RunLoop.main)
                         .sink { call in
+                            if (call.status == .ringing) {
+                                self.nav.pushViewController(vc, animated: true)
+                            }
                             // Drive the Call UI state based on stream events from call
                             if vc.viewModel == nil {
                                 let viewModel = ActiveCallViewModel(call: call)

@@ -137,11 +137,12 @@ extension AppDelegate {
         
         // Once the device has registered for push AND we have an authenticated user
         // register device tokens with vonage
-        pushController.pushKitToken
-            .combineLatest(pushController.notificationToken)
-            .filter { (t1,t2) in t1 != nil && t2 != nil }
+        userController.user
+            .replaceError(with: nil)
+            .combineLatest(pushController.pushKitToken, pushController.notificationToken)
+            .filter { (t1,t2, t3) in t1 != nil && t2 != nil && t3 != nil }
             .sink { token in
-                self.callController.registerPushTokens((user:token.1!,voip:token.0!))
+                self.callController.registerPushTokens((user:token.2!,voip:token.1!))
             }
             .store(in: &cancellables)
     }
